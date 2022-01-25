@@ -18,6 +18,14 @@ pub struct NmapRun {
     pub hosts: Vec<RunElement>,
 }
 
+/*
+https://nmap.org/book/nmap-dtd.html:
+
+<!ELEMENT nmaprun      (scaninfo*, verbose, debugging,
+                        ( target | taskbegin | taskprogress | taskend | hosthint |
+                            prescript | postscript | host | output)*,
+                            runstats) >
+*/
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum RunElement {
@@ -28,6 +36,7 @@ pub enum RunElement {
     TaskBegin(TaskBegin),
     TaskProgress(TaskProgress),
     TaskEnd(TaskEnd),
+    HostHint(HostHint),
     Prescript(Prescript),
     Postscript(Postscript),
     Host(Host),
@@ -55,6 +64,9 @@ pub struct TaskProgress {}
 
 #[derive(Debug, Deserialize)]
 pub struct TaskEnd {}
+
+#[derive(Debug, Deserialize)]
+pub struct HostHint {}
 
 #[derive(Debug, Deserialize)]
 pub struct Prescript {}

@@ -24,12 +24,14 @@ fn main() -> Result<()> {
 	if entry.file_name().to_str().unwrap().ends_with(".xml") {
 	    let path = entry.into_path();
 	    let nmap_xml = std::fs::read_to_string(&path)?;
-	    if let Ok(nmap) = from_str::<NmapRun>(&nmap_xml) {
-		println!("{}", &nmap.args);
-		//dbg!(&nmap);
-	    } else {
-		println!("fail");
-	    }
+	    let nmap = from_str::<NmapRun>(&nmap_xml)?;
+	    println!("{}", &nmap.args);
+	    //if let Ok(nmap) = from_str::<NmapRun>(&nmap_xml) {
+	    //	println!("{}", &nmap.args);
+	    //	//dbg!(&nmap);
+	    //} else {
+	    //	println!("fail");
+	    //}
 
 	}
     }

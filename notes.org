@@ -23,6 +23,9 @@
   if A subset of B then only keep B.
   else keep both.
   #+end_src
+** TODO feature: get target lists cli
 ** TODO feature: list of new targets [0/0]
 - targets that were added between time X - Y for example
-  
+** TODO feature: tag support
+** TODO feature: user notes
+** TODO feature: creds db

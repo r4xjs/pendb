@@ -13,9 +13,55 @@ pub struct NmapRun {
     pub startstr: String,
     pub version: String,
     pub xmloutputversion: f32,
-    #[serde(rename = "host", default)]
-    pub hosts: Vec<Host>,
+    // problem: https://github.com/RReverser/serde-xml-rs/issues/55
+    #[serde(rename = "$value")]
+    pub hosts: Vec<RunElement>,
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum RunElement {
+    ScanInfo(StructInfo),
+    Verbose(Verbose),
+    Debugging(Debugging),
+    Target(Target),
+    TaskBegin(TaskBegin),
+    TaskProgress(TaskProgress),
+    TaskEnd(TaskEnd),
+    Prescript(Prescript),
+    Postscript(Postscript),
+    Host(Host),
+    Output(Output),
+    RunStats(RunStats),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StructInfo {}
+
+#[derive(Debug, Deserialize)]
+pub struct Verbose {}
+
+#[derive(Debug, Deserialize)]
+pub struct Debugging {}
+
+#[derive(Debug, Deserialize)]
+pub struct Target {}
+
+#[derive(Debug, Deserialize)]
+pub struct TaskBegin {}
+
+#[derive(Debug, Deserialize)]
+pub struct TaskProgress {}
+
+#[derive(Debug, Deserialize)]
+pub struct TaskEnd {}
+
+#[derive(Debug, Deserialize)]
+pub struct Prescript {}
+
+#[derive(Debug, Deserialize)]
+pub struct Postscript {}
+
 
 #[derive(Debug, Deserialize)]
 pub struct Host {
@@ -24,6 +70,14 @@ pub struct Host {
     pub address: Address,
     pub ports: Ports,
 }
+#[derive(Debug, Deserialize)]
+pub struct Output {}
+
+#[derive(Debug, Deserialize)]
+pub struct RunStats {}
+
+
+
 #[derive(Debug, Deserialize)]
 pub struct Ports {
     #[serde(rename = "port", default)]
@@ -49,7 +103,7 @@ pub struct Status {
 #[derive(Debug, Deserialize)]
 pub struct Service {
     pub name: String,
-    pub product: String,
+    pub product: Option<String>,
     pub method: String,
     pub conf: u32,
 }
@@ -175,9 +229,15 @@ mod tests {
 	let nmap_run: NmapRun= from_str(&xml).unwrap();
 	assert!(nmap_run.hosts.len() == 1);
 	for host in &nmap_run.hosts {
-	    for port in &host.ports.ports {
-		assert!(port.protocol == "tcp");
-		assert!(port.service.name == "http");
+	    match host {
+		RunElement::Host(host) => {
+		    for port in &host.ports.ports {
+			assert!(port.protocol == "tcp");
+			assert!(port.service.name == "http");
+		    }
+		},
+		_ => continue,
+
 	    }
 	}
     }

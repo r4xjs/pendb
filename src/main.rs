@@ -1,5 +1,7 @@
 mod parser;
+mod db;
 use crate::parser::nmap::NmapRun;
+use crate::db::sqlite;
 
 use serde_xml_rs::from_str;
 use walkdir::WalkDir;

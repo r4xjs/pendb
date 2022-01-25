@@ -1,0 +1,28 @@
+* Tasks
+** TODO generate some log files [0/2]
+- [ ] nmap
+- [ ] amass
+** TODO perf [0/2]
+- [ ] test joins with TEXT vs NUMERIC data.
+      At the moment IP is used to join tables but IP is TEXT data
+      because of IPv6
+- [ ] what is the bottleneck during import (parser, disk, db insert)?
+      Initial tests showed that the nmap xml parser needs ~5ms/xml file on
+      small/medium size company targets.
+** TODO merge/update new logs into db [0/1]
+- [ ] insert when (ip,domain) or (ip,port) = K:
+  #+begin_src text
+  if K not in db then just add the data
+  else do a similar merge like in the "merge multiple log results" case.
+  #+end_src
+** TODO merge multiple log results [0/1]
+- [ ] merge heuristic for banner and script results
+  to prevent double entries but also not to miss data.
+  For example following rule could be used:
+  #+begin_src text
+  if A subset of B then only keep B.
+  else keep both.
+  #+end_src
+** TODO feature: list of new targets [0/0]
+- targets that were added between time X - Y for example
+  

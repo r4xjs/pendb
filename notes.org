@@ -3,8 +3,8 @@
 - [X] nmap
 - [X] amass
 ** DONE import single nmap xml to sqlite
-** TODO import single amass json to sqlite [0/2]
-- [ ] amass json parser
+** TODO import single amass json to sqlite [1/2]
+- [X] amass json parser
 - [ ] sqlite insert
 ** TODO merge multiple log results [0/1]
 - [ ] merge heuristic for banner and script results

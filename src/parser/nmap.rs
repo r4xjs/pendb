@@ -1,4 +1,10 @@
+use std::io::Read;
+
 use serde::{Deserialize};
+use serde_xml_rs::from_reader;
+
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // <nmaprun scanner="nmap"
 //    args="nmap -sTV -iL ips.lst -oA asdf"
@@ -16,6 +22,13 @@ pub struct NmapRun {
     // problem: https://github.com/RReverser/serde-xml-rs/issues/55
     #[serde(rename = "$value")]
     pub hosts: Vec<RunElement>,
+}
+
+type Nmap = NmapRun;
+impl Nmap {
+    pub fn new<R: Read>(reader: R) -> Result<Self> {
+	Ok(from_reader(reader)?)
+    }
 }
 
 /*
@@ -138,6 +151,37 @@ mod tests {
     use super::*;
     use serde_xml_rs::from_str;
 
+
+	const NMAP_XML: &str = r#"
+<nmaprun scanner="nmap" args="nmap -sTV -iL ips.lst -oA asdf" start="1643060432" startstr="Mon Jan 24 21:40:32 2022" version="7.92" xmloutputversion="1.05">
+
+<host starttime="1643060432" endtime="1643060451">
+<status state="up" reason="syn-ack" reason_ttl="0"/>
+<address addr="104.19.128.108" addrtype="ipv4"/>
+<ports>
+    <port protocol="tcp" portid="80">
+    	<state state="open" reason="syn-ack" reason_ttl="0"/>
+    	<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
+    </port>
+    <port protocol="tcp" portid="443">
+    	<state state="open" reason="syn-ack" reason_ttl="0"/>
+    	<service name="http" product="Cloudflare http proxy" tunnel="ssl" method="probed" conf="10"/>
+    </port>
+    <port protocol="tcp" portid="8080">
+    	<state state="open" reason="syn-ack" reason_ttl="0"/>
+    	<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
+    </port>
+    <port protocol="tcp" portid="8443">
+    	<state state="open" reason="syn-ack" reason_ttl="0"/>
+    	<service name="http" product="Cloudflare http proxy" tunnel="ssl" method="probed" conf="10"/>
+    </port>
+</ports>
+</host>
+</nmaprun>
+"#;
+
+
+
     #[test]
     fn parse_address() {
 	let addr_str = r#"<address addr="104.19.128.108" addrtype="ipv4"/>"#;
@@ -211,34 +255,7 @@ mod tests {
 
     #[test]
     fn parse_nmap_run() {
-	let xml = r#"
-<nmaprun scanner="nmap" args="nmap -sTV -iL ips.lst -oA asdf" start="1643060432" startstr="Mon Jan 24 21:40:32 2022" version="7.92" xmloutputversion="1.05">
-
-<host starttime="1643060432" endtime="1643060451">
-<status state="up" reason="syn-ack" reason_ttl="0"/>
-<address addr="104.19.128.108" addrtype="ipv4"/>
-<ports>
-    <port protocol="tcp" portid="80">
-    	<state state="open" reason="syn-ack" reason_ttl="0"/>
-    	<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
-    </port>
-    <port protocol="tcp" portid="443">
-    	<state state="open" reason="syn-ack" reason_ttl="0"/>
-    	<service name="http" product="Cloudflare http proxy" tunnel="ssl" method="probed" conf="10"/>
-    </port>
-    <port protocol="tcp" portid="8080">
-    	<state state="open" reason="syn-ack" reason_ttl="0"/>
-    	<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
-    </port>
-    <port protocol="tcp" portid="8443">
-    	<state state="open" reason="syn-ack" reason_ttl="0"/>
-    	<service name="http" product="Cloudflare http proxy" tunnel="ssl" method="probed" conf="10"/>
-    </port>
-</ports>
-</host>
-</nmaprun>
-"#;
-	let nmap_run: NmapRun= from_str(&xml).unwrap();
+	let nmap_run: NmapRun= from_str(&NMAP_XML).unwrap();
 	assert!(nmap_run.hosts.len() == 1);
 	for host in &nmap_run.hosts {
 	    match host {
@@ -254,5 +271,12 @@ mod tests {
 	}
     }
 
+    #[test]
+    fn parse_nmap_obj() {
+	let nmap = Nmap::new(NMAP_XML.as_bytes());
+	assert!(nmap.is_ok());
+	let nmap = nmap.unwrap();
+	assert!(nmap.hosts.len() == 1);
+    }
 
 }

@@ -48,7 +48,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS service_unique_idx ON service (ip, port);
     }
 
     pub fn insert_nmap_scan(&self, nmap: &NmapRun) -> Result<u32> {
-	// TODO: merge/update excisting entries
+	// TODO: merge/update existing entries
 
 	let mut cursor = self.conn.prepare(
 	    "INSERT INTO service VALUES (:ip, :port, :service, :name, :prod, :method, :conf, :state, :reason)")?

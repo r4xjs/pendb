@@ -218,7 +218,7 @@ mod tests {
 <status state="up" reason="syn-ack" reason_ttl="0"/>
 <address addr="104.19.128.108" addrtype="ipv4"/>
 <ports>
-    <!-- <port protocol="tcp" portid="80">
+    <port protocol="tcp" portid="80">
     	<state state="open" reason="syn-ack" reason_ttl="0"/>
     	<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
     </port>
@@ -233,7 +233,7 @@ mod tests {
     <port protocol="tcp" portid="8443">
     	<state state="open" reason="syn-ack" reason_ttl="0"/>
     	<service name="http" product="Cloudflare http proxy" tunnel="ssl" method="probed" conf="10"/>
-    </port> -->
+    </port>
 </ports>
 </host>
 </nmaprun>

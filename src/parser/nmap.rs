@@ -24,7 +24,7 @@ pub struct NmapRun {
     pub hosts: Vec<RunElement>,
 }
 
-type Nmap = NmapRun;
+pub type Nmap = NmapRun;
 impl Nmap {
     pub fn new<R: Read>(reader: R) -> Result<Self> {
 	Ok(from_reader(reader)?)

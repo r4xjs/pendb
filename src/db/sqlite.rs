@@ -4,6 +4,7 @@ use sqlite::{self, Connection};
 use sqlite::Value::{Integer, String};
 
 use crate::parser::nmap::*;
+use crate::parser::amass::*;
 
 
 
@@ -47,14 +48,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS service_unique_idx ON service (ip, port);
 	Ok(())
     }
 
-    pub fn insert_nmap_scan(&self, nmap: &NmapRun) -> Result<u32> {
+    pub fn insert_nmap_scan(&self, nmap: Nmap) -> Result<u32> {
 	// TODO: merge/update existing entries
 
 	let mut cursor = self.conn.prepare(
 	    "INSERT INTO service VALUES (:ip, :port, :service, :name, :prod, :method, :conf, :state, :reason)")?
 	    .into_cursor();
 	let mut counter = 0;
-	for host in &nmap.hosts {
+	for host in nmap.hosts {
 	    match host {
 		RunElement::Host(host) => {
 		    for port in &host.ports.ports {
@@ -78,6 +79,32 @@ CREATE UNIQUE INDEX IF NOT EXISTS service_unique_idx ON service (ip, port);
 	}
 	Ok(counter)
     }
+
+
+    pub fn insert_amass_scan(&self, amass: Amass) -> Result<u32> {
+	// TODO: merge/update existing entries
+
+	let mut cursor = self.conn.prepare(
+	    "INSERT INTO domain VALUES (:ip, :domain, :cidr, :asn, :description, :amass_tag)")?
+	    .into_cursor();
+	let mut counter = 0;
+	for entry in &amass.entries {
+	    for addr in &entry.addresses { 
+		cursor.bind_by_name(vec![
+		    (":ip", String(addr.ip.clone())),
+		    (":domain", String(entry.name.clone())),
+		    (":cidr", String(addr.cidr.clone())),
+		    (":asn", Integer(addr.asn as i64)),
+		    (":description", String(addr.desc.clone())),
+		    (":amass_tag", String(entry.tag.clone())),
+		])?;
+		counter += 1;
+		cursor.next()?;
+	    }
+	}
+	Ok(counter)
+    }
+
 
 }
 
@@ -117,7 +144,11 @@ mod tests {
 </host>
 </nmaprun>
 "#;
-	
+    const AMASS_JSON: &str = r#"{"name":"1.thumbs.4chan.org","domain":"4chan.org","addresses":[{"ip":"104.19.129.108","cidr":"104.16.0.0/14","asn":13335,"desc":"CLOUDFLARENET - Cloudflare, Inc."},{"ip":"104.19.128.108","cidr":"104.16.0.0/14","asn":13335,"desc":"CLOUDFLARENET - Cloudflare, Inc."}],"tag":"api","sources":["AlienVault"]}
+{"name":"blog.4chan.org","domain":"4chan.org","addresses":[{"ip":"74.114.154.18","cidr":"74.114.152.0/22","asn":2635,"desc":"AUTOMATTIC - Automattic, Inc"},{"ip":"74.114.154.22","cidr":"74.114.152.0/22","asn":2635,"desc":"AUTOMATTIC - Automattic, Inc"}],"tag":"api","sources":["AlienVault"]}
+{"name":"4chan.org","domain":"4chan.org","addresses":[{"ip":"104.19.128.108","cidr":"104.16.0.0/14","asn":13335,"desc":"CLOUDFLARENET - Cloudflare, Inc."},{"ip":"104.19.129.108","cidr":"104.16.0.0/14","asn":13335,"desc":"CLOUDFLARENET - Cloudflare, Inc."}],"tag":"dns","sources":["DNS","AlienVault","SonarSearch"]}"#;
+
+
 
     #[test]
     fn create_table() {
@@ -130,8 +161,8 @@ mod tests {
 	let db = Db::new(":memory:").unwrap();
 	db.create_table().unwrap();
 
-	let nmap = from_str::<NmapRun>(&NMAP_XML).unwrap();
-	let count = db.insert_nmap_scan(&nmap);
+	let nmap = Nmap::new(NMAP_XML.as_bytes()).unwrap();
+	let count = db.insert_nmap_scan(nmap);
 	assert!(count.is_ok());
 	assert!(count.unwrap() == 4);
 
@@ -142,8 +173,29 @@ mod tests {
 	    count += 1;
 	}
 	assert!(count == 4);
-	
     }
 
-    
+    #[test]
+    fn insert_amass_scan() {
+	let db = Db::new(":memory:").unwrap();
+	db.create_table().unwrap();
+
+	let amass = Amass::new(AMASS_JSON.as_bytes()).unwrap();
+	let count = db.insert_amass_scan(amass);
+	assert!(&count.is_ok());
+	assert!(count.unwrap() == 6);
+
+	let mut cursor = db.conn.prepare("SELECT ip, domain, cidr, asn, description, amass_tag FROM domain WHERE domain = '4chan.org'")
+	    .unwrap()
+	    .into_cursor();
+	let mut count = 0;
+	while let Some(row) = cursor.next().unwrap() {
+	    assert!(row[1].as_string().unwrap() == "4chan.org");
+	    assert!(row[3].as_integer().unwrap() == 13335);
+	    count += 1;
+	}
+	assert!(count == 2);
+    }
+
+   
 }

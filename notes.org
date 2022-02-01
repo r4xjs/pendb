@@ -1,11 +1,11 @@
 * Tasks
-** TODO generate some log files [2/2]
+** DONE generate some log files [2/2]
 - [X] nmap
 - [X] amass
 ** DONE import single nmap xml to sqlite
-** TODO import single amass json to sqlite [1/2]
+** DONE import single amass json to sqlite [2/2]
 - [X] amass json parser
-- [ ] sqlite insert
+- [X] sqlite insert
 ** TODO merge multiple log results [0/1]
 - [ ] merge heuristic for banner and script results
   to prevent double entries but also not to miss data.
@@ -27,7 +27,7 @@
 - [ ] what is the bottleneck during import (parser, disk, db insert)?
       Initial tests showed that the nmap xml parser needs ~5ms/xml file on
       small/medium size company targets.
-** TODO feature: get target lists cli
+* TODO feature: get target lists cli
 ** TODO feature: list of new targets [0/0]
 - targets that were added between time X - Y for example
 ** TODO feature: tag support

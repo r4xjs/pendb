@@ -143,8 +143,30 @@ pub struct Port {
     pub portid: u32,
     pub state: Status,
     pub service: Service,
+    #[serde(rename = "script")]
+    pub scripts: Option<Vec<Script>>,
 }
 
+// !ELEMENT script (#PCDATA|table|elem)* >
+// <!ATTLIST script
+// id CDATA #REQUIRED
+// output CDATA #REQUIRED
+// >
+// 
+// <!ELEMENT table (table|elem)* >
+// <!ATTLIST table
+//     key CDATA #IMPLIED
+// >
+// 
+// <!ELEMENT elem (#PCDATA)>
+// <!ATTLIST elem
+//     key CDATA #IMPLIED
+// >
+#[derive(Debug, Deserialize)]
+pub struct Script {
+    pub id: String,
+    pub output: String,
+}
 
 #[cfg(test)]
 mod tests {
@@ -181,7 +203,6 @@ mod tests {
 "#;
 
 
-
     #[test]
     fn parse_address() {
 	let addr_str = r#"<address addr="104.19.128.108" addrtype="ipv4"/>"#;
@@ -202,19 +223,32 @@ mod tests {
 
 
     #[test]
-    fn parse_port() {
+    fn parse_port_with_script() {
 	let xml = r#"
-<port protocol="tcp" portid="80">
-<state state="open" reason="syn-ack" reason_ttl="0"/>
-<service name="http" product="Cloudflare http proxy" method="probed" conf="10"/>
-</port>
+<port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="52"/><service name="http" product="OpenResty web app server" method="probed" conf="10"><cpe>cpe:/a:openresty:ngx_openresty</cpe></service><script id="http-methods" output="&#xa;  Supported Methods: GET HEAD POST OPTIONS"><table key="Supported Methods">
+<elem>GET</elem>
+<elem>HEAD</elem>
+<elem>POST</elem>
+<elem>OPTIONS</elem>
+</table>
+</script><script id="http-server-header" output="openresty"><elem>openresty</elem>
+</script><script id="http-title" output="Not found."><elem key="title">Not found.</elem>
+</script></port>
 "#;
+
 	let port: Port = from_str(&xml).unwrap();
 	assert!(port.protocol == "tcp");
 	assert!(port.portid == 80);
 	assert!(port.state.state == "open");
 	assert!(port.service.name == "http");
+	let scripts = port.scripts.unwrap();
+	assert!(scripts[0].id == "http-methods");
+	assert!(scripts[0].output == "\n  Supported Methods: GET HEAD POST OPTIONS");
+	assert!(scripts[1].id == "http-server-header");
+	//assert!(scripts[1].output == "openresty");
+
     }
+    
 
     #[test]
     fn parse_host() {
@@ -278,5 +312,6 @@ mod tests {
 	let nmap = nmap.unwrap();
 	assert!(nmap.hosts.len() == 1);
     }
+
 
 }
